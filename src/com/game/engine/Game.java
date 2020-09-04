@@ -7,12 +7,9 @@ import com.game.engine.graphics.SpriteSheet;
 import com.game.engine.math.Vector2D;
 import com.game.engine.math.raytracing.RayCaster;
 import com.game.layers.Layer;
-import com.game.net.GameClient;
-import com.game.net.GameServer;
 import com.game.player.Player;
 import com.game.player.PlayerKeyListener;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.util.Random;
@@ -28,9 +25,6 @@ public class Game extends Canvas implements Runnable {
     private static Handler handler;
     private Hud hud;
     public static Game instance;
-
-    private GameClient socketClient;
-    private GameServer socketServer;
 
 
     public static void main(String[] args) {
@@ -56,16 +50,6 @@ public class Game extends Canvas implements Runnable {
         thread = new Thread(this);
         running = true;
         thread.start();
-        if (JOptionPane.showConfirmDialog(null, "Run server?", "Server", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-            socketServer = new GameServer(this);
-            socketServer.listen(1331);
-            System.out.println("Server started!");
-        }
-
-        socketClient = new GameClient(this, "localhost");
-        socketClient.start();
-        System.out.println("Client started!");
-        socketClient.sendData("ping".getBytes(), 1331);
     }
 
     private void init() {
