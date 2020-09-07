@@ -1,21 +1,28 @@
 package com.game.player;
 
+import com.game.engine.Handler;
+
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 
-public class PlayerController {
-    Player player;
-    KeySet keySet;
-    public static ArrayList<PlayerController> allControllers = new ArrayList<>();
+public class PlayerController extends KeyAdapter {
+    private KeySet keySet;
 
-    public PlayerController(Player player, KeySet ks) {
+    public PlayerController(Handler handler, KeySet ks) {
         /* controlling player object, controlKeys in KeyEvent.VK_...*/
-        this.player = player;
         this.keySet = ks;
-        allControllers.add(this);
+        handler.addKeyListener(this);
     }
 
-    public void checkAgainst(KeyEvent evt) {
+    public boolean[] getPressedKeys() {
+        return this.keySet.pressedKeys;
+    }
+
+    public void keyPressed(KeyEvent evt) {
+        this.keySet.update(evt);
+    }
+
+    public void keyReleased(KeyEvent evt) {
         this.keySet.update(evt);
     }
 }

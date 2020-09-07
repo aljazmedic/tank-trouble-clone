@@ -1,4 +1,4 @@
-package com.game.statics.powerups;
+package com.game.powerups;
 
 public interface SinglePowerupAAT {
     int getConsecutiveNum();

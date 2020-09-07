@@ -18,14 +18,13 @@ public abstract class GameObject implements Tickeable {
     }
 
     public GameObject(Vector2D pos, Vector2D vel, ID id) {
-        this(Game.getHandler(), pos, vel, id, id.getLayers());
+        this(pos, vel, id, id.getLayers());
     }
 
-    public GameObject(Handler handler, Vector2D pos, Vector2D vel, ID id, long layers) {
-        this.transform = new Transform(pos.copy(), vel.copy());
+    public GameObject(Vector2D pos, Vector2D vel, ID id, long layers) {
+        this.transform = new Transform(pos, vel);
         this.setLayers(layers);
         this.id = id;
-        handler.addObject(this);
 
     }
 
@@ -97,9 +96,7 @@ public abstract class GameObject implements Tickeable {
     }
 
     public enum ID {
-        Player1(Layer.PLAYERS),
-        Player2(Layer.PLAYERS),
-        Player3(Layer.PLAYERS),
+        Player(Layer.PLAYERS),
         Bullet(Layer.BULLETS), Screen(Layer.ENVIRONMENT), Powerup(Layer.POWERUPS), Wall(Layer.ENVIRONMENT), Mouse(Layer.MOUSE);
 
         private final long layers;

@@ -2,14 +2,17 @@ package com.game.engine;
 
 import com.game.Hud;
 import com.game.Mouse;
-import com.game.engine.graphics.Font;
-import com.game.engine.graphics.SpriteSheet;
 import com.game.engine.math.Vector2D;
-import com.game.engine.math.raytracing.RayCaster;
-import com.game.layers.Layer;
+import com.game.gfx.SpriteSheet;
+import com.game.net.GameClient;
+import com.game.net.GameServer;
+import com.game.net.NetPlayer;
+import com.game.net.packets.Packet00Login;
+import com.game.player.KeySet;
 import com.game.player.Player;
-import com.game.player.PlayerKeyListener;
+import com.game.player.PlayerController;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.util.Random;
@@ -17,67 +20,123 @@ import java.util.Random;
 public class Game extends Canvas implements Runnable {
     //https://youtu.be/Urg8AEIVyWA?t=8m45s
     private static final long serialVersionUID = -240840600533728354L;
-    public static Random rand = new Random();
+    private static Random rand = new Random();
 
     public static final int WIDTH = 800, HEIGHT = WIDTH / 16 * 9;
+    private static Random random;
     private Thread thread;
     private boolean running = false;
     private static Handler handler;
     private Hud hud;
     public static Game instance;
 
+    private SpriteSheet tankSheet = new SpriteSheet("/graphics/Sprite_Sheet.png");
+
+    public GameClient socketClient;
+    private GameServer socketServer;
+    private boolean runningServer = false;
+
+    public NetPlayer player;
+    public Window window;
 
     public static void main(String[] args) {
+        boolean runServer = false;
+        if(args.length >= 1 && args[0].equalsIgnoreCase("server")){
+            runServer = true;
+        }else if(args.length < 1){
+            runServer = JOptionPane.showConfirmDialog(instance.window, "Run server?", "Server", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+        }
+        String name;
+        if(args.length >= 2 && !args[1].isEmpty()){
+            name = args[1];
+        }else{
+            name = JOptionPane.showInputDialog("Enter username");
+        }
+
+
         instance = new Game();
         instance.init();
+        instance.createLocalPlayer(name, KeySet.KEY_SET2);
+
+        if (runServer) {instance.runServer();
+        }
         instance.start();
     }
 
     public Game() {
         handler = new Handler(WIDTH, HEIGHT, this, rand);
-        Player.fromPreset(Player.Preset.P1);
-        Player.fromPreset(Player.Preset.P2);
+        random = new Random(34565434567876L);
     }
 
-    public static Font font;
+    public static Random getRandom() {
+            return random;
+    }
+
+//    public static Font font;
 
     @Override
     public Dimension getPreferredSize() {
         return new Dimension(WIDTH, HEIGHT);
     }
 
-    public synchronized void start() {
+    private void runServer(){
+        this.runningServer = true;
+        socketServer = new GameServer(this);
+        runningServer=true;
+        socketServer.start();
+    }
+
+    private synchronized void start() {
         thread = new Thread(this);
         running = true;
         thread.start();
+
+        handler.addObject(player);
+        player.craftLoginPacket().clientToServer(socketClient);
+
     }
 
     private void init() {
-        this.addKeyListener(new PlayerKeyListener());
         Mouse mcl = new Mouse();
         this.addMouseListener(mcl);
         this.addMouseMotionListener(mcl);
-        //Player.fromPreset(Player.Preset.P3);
-        //hud = new Hud(handler.getActivePlayer(GameObject.ID.Player1), new Vector2D(-Game.WIDTH/2. + 16, Game.HEIGHT/2. -16));
-        //new Wall(Vector2D.ZERO);
-        //new RayCaster(Vector2D.ZERO,Math.PI*3/2);
-        RayCaster rc = new RayCaster(Vector2D.ZERO, Layer.EVERYTHING, h -> h.allGameObjects(Layer.not(Layer.ENVIRONMENT)));
-        font = Font.fromSpriteSheet(new SpriteSheet("graphics/Font.png", 30, 36));
 
-        new Window("Tank Trouble", this);
+
+        //hud = new Hud(handler.getActivePlayer(GameObject.ID.Player1), new Vector2D(-Game.WIDTH/2. + 16, Game.HEIGHT/2. -16));
+        //new RayCaster(Vector2D.ZERO,Math.PI*3/2);
+//        RayCaster rc = new RayCaster(Vector2D.ZERO, Layer.EVERYTHING, h -> h.allGameObjects(Layer.not(Layer.ENVIRONMENT)));
+//        getHandler().addRayCaster(rc);
+
+        window = new Window("Tank Trouble", this);
+
+        instance.socketClient = new GameClient(instance, "localhost");
+        instance.socketClient.start();
+
+        window.requestFocus();
     }
 
-    public synchronized void stop() {
+    void createLocalPlayer(String name, KeySet ks)
+    {
+
+        PlayerController pc = new PlayerController(handler, ks);
+        this.player = new NetPlayer(Vector2D.ZERO, Vector2D.DOWN,
+                pc, GameObject.ID.Player,
+                Player.ColorPreset.CP1
+                ,name, null, -1);
+    }
+
+    synchronized void stop() {
         try {
             thread.join();
             running = false;
+            System.exit(0);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public void run() {
-        this.setVisible(true);
+        window.setVisible(true);
         this.requestFocus();
         long lastTime = System.nanoTime();
         double amountOfTicks = 60.0;
@@ -94,13 +153,15 @@ public class Game extends Canvas implements Runnable {
                 ticks++;
                 delta--;
             }
-            if (running)
+            if (running){
+
                 paint();
-            frames++;
+                frames++;
+            }
 
             if (System.currentTimeMillis() - timer > 1000) {
                 timer = timer + 1000;
-                System.out.printf("FPS: %d ticks: %d%n", frames, ticks);
+                window.setTitle(String.format("FPS: % 3d ticks: % 3d%n - %s", frames, ticks, this.player.getName()+ (runningServer?" (SERVER)":"")));
                 frames = 0;
                 ticks = 0;
             }
@@ -111,7 +172,6 @@ public class Game extends Canvas implements Runnable {
 
     private void tick() {
         handler.tick();
-        //hud.tick();
     }
 
     public void paint() {
@@ -138,7 +198,7 @@ public class Game extends Canvas implements Runnable {
                 RenderingHints.VALUE_ANTIALIAS_ON);
         handler.paint(g2d);
         handler.gizmosPaint(g2d);
-        font.draw(g2d, "TEST", new Vector2D(100, 100), 1);
+//        font.draw(g2d, "TEST", new Vector2D(100, 100), 1);
         //font.draw(g2d, "TEST", new Vector2D(100, 100), 0.5, TextAlignment.CENTER);
         //font.draw(g2d, "TEST", new Vector2D(150, 150), 2);
         //hud.paint(g2d);

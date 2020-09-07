@@ -9,17 +9,24 @@ import com.game.engine.math.raytracing.RayCastable;
 import com.game.layers.CombinedLayerFilterIterator;
 import com.game.layers.Layer;
 import com.game.layers.LayerFilterIterator;
+import com.game.net.NetPlayer;
 import com.game.player.Player;
-import com.game.statics.Screen;
-import com.game.statics.powerups.HealPowerup;
-import com.game.statics.powerups.Powerup;
-import com.game.statics.powerups.SpeedPowerup;
+import com.game.Screen;
+import com.game.powerups.HealPowerup;
+import com.game.powerups.Powerup;
+import com.game.powerups.SpeedPowerup;
 
 import java.awt.*;
+import java.awt.event.KeyListener;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Handler {
     private final Game game;
@@ -27,10 +34,17 @@ public class Handler {
     private final ArrayList<Bullet> bullets;
     private final ArrayList<Powerup> powerups;
     private final ArrayList<RayCastable> rayCasters;
+
+    private final Lock objectsLock = new ReentrantLock();
+    private final Lock bulletsLock = new ReentrantLock();
+    private final Lock powerupsLock = new ReentrantLock();
+
     private Screen screen;
 
     private Cooldown powerupSpawner;
     public final Random rand;
+
+    private ExecutorService executor;
 
     public Handler(int w, int h, Game game, Random r) {
         this.game = game;
@@ -41,6 +55,7 @@ public class Handler {
         this.screen = new Screen(this, w, h);
         this.rand = r;
         this.powerupSpawner = new Cooldown(10);
+        executor = Executors.newFixedThreadPool(2);
     }
 
     public Game getGame() {
@@ -51,7 +66,9 @@ public class Handler {
         this.getGame().stop();
     }
 
-    public void tick() {
+
+    public synchronized void tick() {
+        powerupsLock.lock();
         for (int PUIdx = powerups.size() - 1; PUIdx >= 0; PUIdx--) {
             Powerup p = powerups.get(PUIdx);
             powerups.get(PUIdx).tick();
@@ -72,12 +89,16 @@ public class Handler {
                 }
             }
         }
+        powerupsLock.unlock();
 
+        bulletsLock.lock();
         for (int bulletIdx = bullets.size() - 1; bulletIdx >= 0; bulletIdx--) {
-            Bullet b = (Bullet) bullets.get(bulletIdx);
+            Bullet b = bullets.get(bulletIdx);
             tickAndTrigger(b);
         }
+        bulletsLock.unlock();
 
+        objectsLock.lock();
         for (int gameObjectIdx = objects.size() - 1; gameObjectIdx >= 0; gameObjectIdx--) {
             GameObject go = objects.get(gameObjectIdx);
             tickAndTrigger(go);
@@ -87,43 +108,58 @@ public class Handler {
                     go.onDie();
             }
         }
+        objectsLock.unlock();
 
 
         if (powerupSpawner.timedOut()) {
             int N = 2;
             switch (rand.nextInt(N)) {
                 case 0:
-                    new HealPowerup(rand);
+                    this.addObject(new HealPowerup(rand));
                     break;
                 case 1:
-                    new SpeedPowerup(rand);
+                    this.addObject(new SpeedPowerup(rand));
                     break;
             }
             powerupSpawner.reset();
         }
     }
 
+    public void addKeyListener(KeyListener kl) {
+        this.getGame().addKeyListener(kl);
+    }
+
     public void paint(Graphics2D g) {
+        objectsLock.lock();
+        bulletsLock.lock();
+        powerupsLock.lock();
         screen.paint(g);
         this.powerups.forEach((p) -> {
             if (!p.pickedUp())
                 p.paint(g);
         });
         this.bullets.forEach((p) -> p.paint(g));
-        getIterator(Layer.not(Layer.ENVIRONMENT)).forEachRemaining(p -> p.paint(g));
+        this.objects.forEach(go -> {
+            if (Layer.fitsMask(go, Layer.not(Layer.ENVIRONMENT))) {
+                go.paint(g);
+            }
+        });
+        objectsLock.unlock();
+        bulletsLock.unlock();
+        powerupsLock.unlock();
     }
 
     public void gizmosPaint(Graphics2D g) {
+        objectsLock.lock();
 
         g.setColor(new Color(0xA4FF4AC7, true));
         screen.gizmosPaint(g);
 
-        objects.forEach((e) -> {
-
+        for (GameObject e : objects) {
             g.setColor(new Color(0xA4FF4AC7, true));
             e.gizmosPaint(g);
             e.colliderGizmosPaint(g);
-        });
+        }
 
         for (RayCastable r : this.rayCasters) {
             g.setColor(new Color(0xA4FF2528, true));
@@ -134,6 +170,7 @@ public class Handler {
                 hit.debugPaint(g);
             }
         }
+        objectsLock.unlock();
     }
 
     public ArrayList<GameObject> getGameObjectsById(GameObject.ID id) {
@@ -164,19 +201,36 @@ public class Handler {
     }
 
     public void addObject(GameObject object) {
-        switch (object.getId()) {
-            case Bullet:
-                this.bullets.add((Bullet) object);
-                break;
-            case Powerup:
-                this.powerups.add((Powerup) object);
-                break;
-            case Wall:
-            case Screen:
-            default:
-                this.objects.add(object);
-                break;
-        }
+        executor.submit(() -> {
+            switch (object.getId()) {
+                case Bullet:
+                    try {
+                        bulletsLock.lock();
+                        this.bullets.add((Bullet) object);
+                    } finally {
+                        bulletsLock.unlock();
+                    }
+                    break;
+                case Powerup:
+                    try {
+                        powerupsLock.lock();
+                        this.powerups.add((Powerup) object);
+                    } finally {
+                        powerupsLock.unlock();
+                    }
+                    break;
+                case Wall:
+                case Screen:
+                default:
+                    try {
+                        objectsLock.lock();
+                        this.objects.add(object);
+                    } finally {
+                        objectsLock.unlock();
+                    }
+                    break;
+            }
+        });
     }
 
     /*public void addBullet(Bullet object) {
@@ -191,18 +245,20 @@ public class Handler {
     }
 
     public void removeObject(GameObject object) {
-        switch (object.getId()) {
-            case Bullet:
-                this.bullets.remove(object);
-                break;
-            case Powerup:
-                this.powerups.remove(object);
-                break;
-            case Wall:
-            default:
-                this.objects.remove(object);
-                break;
-        }
+        executor.submit(() -> {
+            switch (object.getId()) {
+                case Bullet:
+                    this.bullets.remove(object);
+                    break;
+                case Powerup:
+                    this.powerups.remove(object);
+                    break;
+                case Wall:
+                default:
+                    this.objects.remove(object);
+                    break;
+            }
+        });
     }
 
     public static AffineTransform getDrawTransform() {
@@ -229,13 +285,10 @@ public class Handler {
 
     public int countActivePlayers() {
         int count = 0;
-        GameObject.ID[] players = new GameObject.ID[]{GameObject.ID.Player1, GameObject.ID.Player3, GameObject.ID.Player3};
         for (Iterator<GameObject> i = Game.getHandler().getIterator(); i.hasNext(); ) {
             GameObject.ID thisId = i.next().getId();
-            for (GameObject.ID testId : players) {
-                if (testId == thisId)
-                    count++;
-            }
+            if (GameObject.ID.Player == thisId)
+                count++;
         }
         return count;
     }
@@ -296,5 +349,17 @@ public class Handler {
             if (afterCollides)
                 gameObject.onHit(testGameObject);
         }
+    }
+
+    public NetPlayer getNetPlayerByName(String name) {
+        for (GameObject go : objects) {
+            if (go instanceof NetPlayer) {
+                NetPlayer otherNetPlayer = (NetPlayer) go;
+                if (otherNetPlayer.getName().equals(name)) {
+                    return otherNetPlayer;
+                }
+            }
+        }
+        return null;
     }
 }

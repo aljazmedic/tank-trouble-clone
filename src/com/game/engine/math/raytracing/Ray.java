@@ -6,6 +6,7 @@ import com.game.engine.math.Vector2D;
 
 import java.awt.*;
 
+@SuppressWarnings("ALL")
 public class Ray extends Vector2D {
     protected long layerMask;
 
@@ -52,11 +53,12 @@ public class Ray extends Vector2D {
     }
 
     public boolean hit(Vector2D direction, GameObject target, Vector2D tangent) {
-        this.set(direction.x, direction.y);
+        this.x = direction.x;
+        this.y = direction.y;
         this.target = target;
-        this.tangent = tangent.normalize().copy();
-        this.normal = tangent.copy().rotate(-Math.PI / 2).normalize();
-        this.hitPoint = this.origin.copy().add(direction);
+        this.tangent = tangent.normalize();
+        this.normal = Vector2D.fromPol(tangent.angle()-Math.PI / 2);
+        this.hitPoint = this.origin.add(direction);
         this.hit = true;
         return this.hit;
     }

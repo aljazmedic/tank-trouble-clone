@@ -1,4 +1,4 @@
-package com.game.statics;
+package com.game;
 
 import com.game.engine.Game;
 import com.game.engine.GameObject;
@@ -20,7 +20,7 @@ public class Screen extends GameObject implements Collidable {
     private Collider collider;
 
     public Screen(Handler handler, int w, int h) {
-        super(handler, Vector2D.ZERO, Vector2D.ZERO, ID.Screen, ID.Screen.getLayers());
+        super(Vector2D.ZERO, Vector2D.ZERO, ID.Screen, ID.Screen.getLayers());
         WIDTH = w;
         HEIGHT = h;
         collider = new Collider(this, new Rectangle(-WIDTH / 2, -HEIGHT / 2, WIDTH, HEIGHT));

@@ -29,7 +29,7 @@ public class RayCaster implements MouseMotionListener, RayCastable {
     }
 
     public RayCaster(Vector2D origin, double angle, Function<Handler, Iterator<GameObject>> iteratorFn) {
-        this(origin, Vector2D.fromAngle(angle), Layer.EVERYTHING, iteratorFn, true);
+        this(origin, Vector2D.fromPol(angle), Layer.EVERYTHING, iteratorFn, true);
     }
 
     public RayCaster(Vector2D origin, Vector2D to, Function<Handler, Iterator<GameObject>> iteratorFn) {
@@ -38,7 +38,7 @@ public class RayCaster implements MouseMotionListener, RayCastable {
 
     public RayCaster(Vector2D origin, Vector2D to, long layerMask, Function<Handler, Iterator<GameObject>> iteratorFn, boolean handlerAdd) {
         this.origin = origin.copy();
-        this.direction = to.copy().normalize();
+        this.direction = to.normalize();
         this.layerMask = layerMask;
         this.iteratorFn = iteratorFn;
         hitListeners = new LinkedList<>();
@@ -48,7 +48,7 @@ public class RayCaster implements MouseMotionListener, RayCastable {
     }
 
     public RayCaster(Vector2D origin, long layerMask, Function<Handler, Iterator<GameObject>> iteratorFn) {
-        this(origin, Vector2D.UP.copy().normalize(), layerMask, iteratorFn, true);
+        this(origin, Vector2D.UP, layerMask, iteratorFn, true);
         Game.instance.addMouseMotionListener(this);
         System.out.println("RAYCASTER MOUSE LISTENER");
     }
@@ -60,7 +60,7 @@ public class RayCaster implements MouseMotionListener, RayCastable {
     }
 
     public void setDirection(Vector2D direction) {
-        this.direction = direction.copy().normalize();
+        this.direction = direction.normalize();
     }
 
     public static Vector2D checkRay(RayCastable rc, Vector2D start, Vector2D end) {
@@ -80,8 +80,8 @@ public class RayCaster implements MouseMotionListener, RayCastable {
         final double t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
         final double u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
         if (t <= 0 || t >= 1 || u <= 0) return null;
-        final Vector2D line = end.copy().sub(start);
-        return start.copy().sub(origin).add(line.normalize(line.mag() * t));
+        final Vector2D line = end.sub(start);
+        return start.sub(origin).add(line.asMag(line.mag() * t));
     }
 
     public boolean cast(Ray storeRay, long layerMask) {
@@ -134,7 +134,7 @@ public class RayCaster implements MouseMotionListener, RayCastable {
                     if (currentRayVector != null) {
                         double currentRayMag = currentRayVector.mag();
                         if (shortestRayMag >= currentRayMag) {
-                            shortestRay = new Ray(this, currentRayVector, collider.getGameObject(), last.copy().sub(thisVector));
+                            shortestRay = new Ray(this, currentRayVector, collider.getGameObject(), last.sub(thisVector));
                             shortestRayMag = currentRayMag;
                         }
                     }

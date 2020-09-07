@@ -7,18 +7,13 @@ public class BouncyBullet extends BasicBullet {
 
     public BouncyBullet(Shooter parent, float damage) {
         super(parent, damage);
-        transform.velocity.normalize(SPEED * .8);
+        transform.setVelocity(transform.velocity.asMag(SPEED * .8));
     }
 
     @Override
     public void paint(Graphics2D g) {
         g.setColor(color);
         drawBody(g);
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
     }
 
     @Override

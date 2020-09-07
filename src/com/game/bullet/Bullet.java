@@ -16,7 +16,7 @@ public abstract class Bullet extends GameObject implements Collidable {
 
     public Bullet(Shooter parent, float damage) {
         super(parent.getBulletOrigin(),
-                Vector2D.fromAngle(parent.getBulletSpawnAngle()).normalize(),
+                Vector2D.fromPol(parent.getBulletSpawnAngle()),
                 ID.Bullet);
         this.parent = parent;
         this.damage = damage;

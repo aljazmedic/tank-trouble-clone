@@ -6,7 +6,7 @@ import java.awt.*;
 
 public class DebugUtil {
     public static void drawVector(Graphics2D g, Vector2D start, Vector2D finish, double mag) {
-        Vector2D temp = finish.copy().normalize(mag);
+        Vector2D temp = finish.asMag(mag);
         g.drawLine((int) start.x, (int) start.y, (int) temp.x + (int) start.x, (int) temp.y + (int) start.y);
     }
 
@@ -15,7 +15,7 @@ public class DebugUtil {
     }
 
     public static void drawVectorFrom(Graphics2D g, Vector2D start, Vector2D dir, double mag) {
-        Vector2D temp = dir.copy().normalize(mag).add(start);
+        Vector2D temp = dir.asMag(mag).add(start);
         g.drawLine((int) start.x, (int) start.y, (int) temp.x, (int) temp.y);
     }
 }

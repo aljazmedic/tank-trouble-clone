@@ -1,4 +1,4 @@
-package com.game.statics.powerups;
+package com.game.powerups;
 
 import com.game.engine.Game;
 import com.game.engine.GameObject;

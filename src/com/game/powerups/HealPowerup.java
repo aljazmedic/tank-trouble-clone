@@ -1,4 +1,4 @@
-package com.game.statics.powerups;
+package com.game.powerups;
 
 import com.game.player.Player;
 

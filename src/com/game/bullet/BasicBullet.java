@@ -16,7 +16,7 @@ public class BasicBullet extends Bullet {
 
     public BasicBullet(Shooter parent, float damage) {
         super(parent, damage);
-        transform.velocity.normalize(SPEED);
+        transform.setVelocity(transform.velocity.asMag(SPEED));
         r = 10;
         body = new Ellipse2D.Double(-r / 2., -r / 2., r, r);
         collider = new Collider(this, new Ellipse2D.Double(-r / 2., -r / 2., r, r));
@@ -29,7 +29,7 @@ public class BasicBullet extends Bullet {
         if (timeLeft.timedOut()) {
             Game.getHandler().removeObject(this);
         }
-        transform.position.add(transform.velocity);
+        transform.move();
     }
 
     public void drawBody(Graphics2D g) {
