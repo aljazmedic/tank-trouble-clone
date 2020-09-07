@@ -22,7 +22,6 @@ public class GameSettings {
         try {
             for (int i = 0; i < args.length; i++) {
                 String t = args[i].trim();
-                System.out.println(t);
                 if (runServer == null) {
                     if (t.equals("--server") || (t.equals("-s"))) {
                         runServer = "server";

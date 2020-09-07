@@ -28,7 +28,7 @@ public class Game extends Canvas implements Runnable {
     private Hud hud;
     public static Game instance;
 
-    private SpriteSheet tankSheet = new SpriteSheet("/graphics/Sprite_Sheet.png");
+    //private SpriteSheet tankSheet = new SpriteSheet("/graphics/Sprite_Sheet.png");
 
     public GameClient socketClient;
     private GameServer socketServer;
@@ -38,12 +38,6 @@ public class Game extends Canvas implements Runnable {
     public Window window;
 
     public static void main(String[] args) {
-        for (String arg :
-                args) {
-
-            System.out.print(arg + " ");
-        }
-        System.out.println();
         GameSettings gs;
         try {
             gs = GameSettings.fromArgs(args);
