@@ -7,12 +7,10 @@ import com.game.gfx.SpriteSheet;
 import com.game.net.GameClient;
 import com.game.net.GameServer;
 import com.game.net.NetPlayer;
-import com.game.net.packets.Packet00Login;
 import com.game.player.KeySet;
 import com.game.player.Player;
 import com.game.player.PlayerController;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.util.Random;
@@ -40,26 +38,29 @@ public class Game extends Canvas implements Runnable {
     public Window window;
 
     public static void main(String[] args) {
-        boolean runServer = false;
-        if(args.length >= 1 && args[0].equalsIgnoreCase("server")){
-            runServer = true;
-        }else if(args.length < 1){
-            runServer = JOptionPane.showConfirmDialog(instance.window, "Run server?", "Server", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
-        }
-        String name;
-        if(args.length >= 2 && !args[1].isEmpty()){
-            name = args[1];
-        }else{
-            name = JOptionPane.showInputDialog("Enter username");
-        }
+        for (String arg :
+                args) {
 
+            System.out.print(arg + " ");
+        }
+        System.out.println();
+        GameSettings gs;
+        try {
+            gs = GameSettings.fromArgs(args);
+        } catch (GameSettings.InvalidArgumentsException e) {
+            System.out.println("Invalid arguments!");
+            System.exit(0);
+            return;
+        }
 
         instance = new Game();
         instance.init();
-        instance.createLocalPlayer(name, KeySet.KEY_SET2);
+        instance.createLocalPlayer(gs.getName(), KeySet.KEY_SET2);
 
-        if (runServer) {instance.runServer();
+        if (gs.shouldRunServer()) {
+            instance.runServer();
         }
+        instance.runClient(gs.getIp());
         instance.start();
     }
 
@@ -69,7 +70,7 @@ public class Game extends Canvas implements Runnable {
     }
 
     public static Random getRandom() {
-            return random;
+        return random;
     }
 
 //    public static Font font;
@@ -79,10 +80,10 @@ public class Game extends Canvas implements Runnable {
         return new Dimension(WIDTH, HEIGHT);
     }
 
-    private void runServer(){
+    private void runServer() {
         this.runningServer = true;
         socketServer = new GameServer(this);
-        runningServer=true;
+        runningServer = true;
         socketServer.start();
     }
 
@@ -108,21 +109,21 @@ public class Game extends Canvas implements Runnable {
 //        getHandler().addRayCaster(rc);
 
         window = new Window("Tank Trouble", this);
-
-        instance.socketClient = new GameClient(instance, "localhost");
-        instance.socketClient.start();
-
         window.requestFocus();
     }
 
-    void createLocalPlayer(String name, KeySet ks)
-    {
+    void runClient(String ip){
+        socketClient = new GameClient(this, ip);
+        socketClient.start();
+    }
+
+    private void createLocalPlayer(String name, KeySet ks) {
 
         PlayerController pc = new PlayerController(handler, ks);
         this.player = new NetPlayer(Vector2D.ZERO, Vector2D.DOWN,
                 pc, GameObject.ID.Player,
                 Player.ColorPreset.CP1
-                ,name, null, -1);
+                , name, null, -1);
     }
 
     synchronized void stop() {
@@ -153,7 +154,7 @@ public class Game extends Canvas implements Runnable {
                 ticks++;
                 delta--;
             }
-            if (running){
+            if (running) {
 
                 paint();
                 frames++;
@@ -161,7 +162,7 @@ public class Game extends Canvas implements Runnable {
 
             if (System.currentTimeMillis() - timer > 1000) {
                 timer = timer + 1000;
-                window.setTitle(String.format("FPS: % 3d ticks: % 3d%n - %s", frames, ticks, this.player.getName()+ (runningServer?" (SERVER)":"")));
+                window.setTitle(String.format("FPS: % 3d ticks: % 3d%n - %s", frames, ticks, this.player.getName() + (runningServer ? " (SERVER)" : "")));
                 frames = 0;
                 ticks = 0;
             }
