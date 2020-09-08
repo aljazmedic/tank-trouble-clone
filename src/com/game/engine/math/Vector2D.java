@@ -2,6 +2,7 @@ package com.game.engine.math;
 
 
 import com.game.engine.Util;
+import com.game.net.packets.Packet;
 import com.game.net.packets.Serializable;
 
 import java.awt.geom.AffineTransform;
@@ -197,8 +198,8 @@ public class Vector2D extends Point2D.Double implements Serializable<Vector2D> {
 
 
     @Override
-    public Vector2D fromByteCode(ByteBuffer data) throws InvalidFormatException {
-        if (data.remaining() < getNumberOfBytes()) throw new InvalidFormatException(this, data.toString());
+    public Vector2D fromByteCode(ByteBuffer data) throws Packet.InvalidPacketException {
+        if (data.remaining() < getNumberOfBytes()) throw new Packet.InvalidPacketException();
         this.x = data.getDouble();
         this.y = data.getDouble();
         return this;

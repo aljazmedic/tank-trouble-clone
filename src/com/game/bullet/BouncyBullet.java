@@ -5,8 +5,8 @@ import java.awt.*;
 public class BouncyBullet extends BasicBullet {
     private static Color color = new Color(0x2D2D2D);
 
-    public BouncyBullet(Shooter parent, float damage) {
-        super(parent, damage);
+    public BouncyBullet(Shooter parent) {
+        super(parent, 20);
         transform.setVelocity(transform.velocity.asMag(SPEED * .8));
     }
 

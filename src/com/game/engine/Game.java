@@ -63,7 +63,7 @@ public class Game extends Canvas implements Runnable {
         random = new Random(34565434567876L);
     }
 
-    public static Random getRandom() {
+    public Random getRandom() {
         return random;
     }
 
@@ -166,6 +166,7 @@ public class Game extends Canvas implements Runnable {
 
 
     private void tick() {
+        if(runningServer) socketServer.tick();
         handler.tick();
     }
 

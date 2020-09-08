@@ -2,6 +2,8 @@ package com.game.net;
 
 import com.game.net.packets.Packet;
 
+import java.net.Socket;
+
 public class Logging {
     @SuppressWarnings("UnusedReturnValue")
     public static String log(String origin, Object o) {

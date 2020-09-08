@@ -7,7 +7,7 @@ import java.util.Random;
 
 public class HealPowerup extends Powerup {
     public HealPowerup(Random r) {
-        super(r, 0);
+        super(Type.HEAL, r, 0);
         this.color = new Color(0xFF1B31);
     }
 

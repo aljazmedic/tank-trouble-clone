@@ -2,7 +2,9 @@ package com.game.net.packets;
 
 import com.game.net.GameClient;
 import com.game.net.GameServer;
+import com.game.powerups.Powerup;
 
+import java.io.DataInputStream;
 import java.nio.ByteBuffer;
 
 
@@ -13,22 +15,12 @@ public abstract class Packet {
         return this.packetId;
     }
 
-    private void putType(ByteBuffer bb) {
-        for(char c : getPacketType().packetId.toCharArray())
-            bb.putChar(c);
-    }
-
     Packet(String packetId) {
         this.packetId = Type.lookup(packetId);
     }
 
-    Packet(ByteBuffer bb, Type t) throws Packet.InvalidPacketException {
-        this.readBufferType(bb);
-        if(t != this.packetId) throw new InvalidPacketException("Read "+this.packetId+", expected "+t);
-    }
-
-    Packet(Type packetType) {
-        this.packetId = packetType;
+    Packet(Type t) {
+        this.packetId = t;
     }
 
     public void serverToClient(GameServer server) {
@@ -39,17 +31,16 @@ public abstract class Packet {
         client.sendData(this.build(1024));
     }
 
-    public abstract void putData(ByteBuffer bb);
+    private void putType(ByteBuffer bb) {
+        for (char c : getPacketType().packetId.toCharArray())
+            bb.putChar(c);
+    }
 
     protected void putPayload(ByteBuffer bb) {
         putType(bb);
     }
 
-    private void readBufferType(ByteBuffer data) throws Packet.InvalidPacketException {
-        String id = "" + data.getChar() + data.getChar();
-        this.packetId = Type.lookup(id);
-        if (packetId == Type.INVALID) throw new Packet.InvalidPacketException("Invalid ID: "+id);
-    }
+    public abstract void putData(ByteBuffer bb);
 
     public String toString() {
         byte[] display = new byte[1024];
@@ -59,46 +50,13 @@ public abstract class Packet {
     }
 
     public byte[] build(int i) {
-        byte[] packetData  = new byte[i];
+        byte[] packetData = new byte[i];
         ByteBuffer bb = ByteBuffer.wrap(packetData);
         putPayload(bb);
         putData(bb);
         return packetData;
     }
 
-    public enum Type {
-        INVALID("iv"),
-        LOGIN("lg"),
-        DISCONNECT("dc"),
-        MOVE("mv"),
-        NOP("np");
-        private String packetId;
-
-        Type(String id) {
-            this.packetId = id;
-        }
-
-        public String getPacketId() {
-            return packetId;
-        }
-
-        @Override
-        public String toString() {
-            return this.packetId;
-        }
-
-        public static Type lookup(byte[] startBytes) {
-            ByteBuffer bb = ByteBuffer.wrap(startBytes);
-            return lookup(""+bb.getChar()+bb.getChar());
-        }
-
-        public static Type lookup(String id) {
-            for (Type pt : Type.values()) {
-                if (pt.getPacketId().equals(id)) return pt;
-            }
-            return INVALID;
-        }
-    }
 
     public static class InvalidPacketException extends Exception {
         public InvalidPacketException(Throwable e) {
@@ -108,8 +66,8 @@ public abstract class Packet {
         public InvalidPacketException() {
             this(new Exception());
         }
-        public InvalidPacketException(String message)
-        {
+
+        public InvalidPacketException(String message) {
             super(message);
         }
     }
@@ -136,8 +94,18 @@ public abstract class Packet {
         return getByteHexStr(s.getBytes());
     }
 
+
+    public static Type parseType(ByteBuffer bb) {
+
+        try {
+            return Type.INVALID.fromByteCode(bb);
+        } catch (InvalidPacketException e) {
+            return Type.INVALID;
+        }
+    }
+
     public static String getByteHexStr(byte[] bytes) {
-        if(bytes.length == 0) return "";
+        if (bytes.length == 0) return "";
         StringBuilder s = new StringBuilder();
         s.append(String.format("%02x", bytes[0]));
         for (int i = 1; i < bytes.length; i++) {
@@ -146,4 +114,62 @@ public abstract class Packet {
         }
         return s.toString();
     }
+
+    public enum Type implements Serializable {
+        INVALID("iv"),
+        LOGIN("lg"),
+        DISCONNECT("dc"),
+        MOVE("mv"),
+        NOP("np"), BULLET_SHOT("bs");
+        private String packetId;
+
+        Type(String id) {
+            this.packetId = id;
+        }
+
+        public String getPacketId() {
+            return packetId;
+        }
+
+        @Override
+        public String toString() {
+            return this.packetId;
+        }
+
+        public static Packet.Type lookup(byte[] startBytes) {
+            ByteBuffer bb = ByteBuffer.wrap(startBytes);
+            return lookup("" + bb.getChar() + bb.getChar());
+        }
+
+        public static Packet.Type lookup(String id) {
+            for (Packet.Type pt : Packet.Type.values()) {
+                if (pt.getPacketId().equals(id)) return pt;
+            }
+            return INVALID;
+        }
+
+        @Override
+        public byte[] toByteCode() {
+            byte[] o = new byte[getNumberOfBytes()];
+            ByteBuffer bb = ByteBuffer.wrap(o);
+            for (char c : this.packetId.toCharArray()) {
+
+                bb.putChar(c);
+            }
+            return o;
+        }
+
+        @Override
+        public Packet.Type fromByteCode(ByteBuffer data) throws InvalidPacketException {
+            StringBuilder sb = new StringBuilder();
+            sb.append(data.getChar()).append(data.getChar());
+            return lookup(sb.toString());
+        }
+
+        @Override
+        public int getNumberOfBytes() {
+            return 2 * Character.BYTES;
+        }
+    }
+
 }

@@ -16,7 +16,9 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.Executors;
 
 public class GameServer extends Thread {
     private DatagramSocket socket;
@@ -51,9 +53,11 @@ public class GameServer extends Thread {
     }
 
     private void onPacketRecieved(DatagramPacket packet) {
-        String message = Packet.getByteHexStr(packet.getData());
-        if (message.length() >= 10) message = message.substring(0, 20)+" ...";
-        Logging.log("SERVER", "[%-7s][%s:%-5s]: [%4d] %s", "PACKET", packet.getAddress().getHostAddress(), packet.getPort(), message.length(), message);
+        Executors.newSingleThreadExecutor().execute(()->{
+            String message = Packet.getByteHexStr(packet.getData());
+            if (message.length() >= 10) message = message.substring(0, 20)+" ...";
+            Logging.log("SERVER","%-7s [%s:%-5s]: [%4d] %s", "CLIENT", packet.getAddress().getHostAddress(), packet.getPort(), message.length(), message);
+        });
         parsePacket(packet);
     }
 
@@ -62,13 +66,14 @@ public class GameServer extends Thread {
         byte[] data = datagramPacket.getData();
         InetAddress address = datagramPacket.getAddress();
         int port = datagramPacket.getPort();
-        Packet.Type pt = Packet.Type.lookup(data);
+        ByteBuffer bb = ByteBuffer.wrap(data);
+        Packet.Type pt = Packet.parseType(bb);
         Packet packet = null;
         switch (pt) {
             case LOGIN:
                 try {
-                    packet = Packet00Login.fromBytes(data);
-                    NetPlayer np = ((Packet00Login) packet).createPlayer(address,port);
+                    packet = new Packet00Login(bb);
+                    NetPlayer np = ((Packet00Login) packet).createPlayer(address, port);
                     addConnection(np, (Packet00Login) packet);
                 } catch (Packet.InvalidPacketException e) {
                     e.printStackTrace();
@@ -77,7 +82,7 @@ public class GameServer extends Thread {
                 break;
             case DISCONNECT:
                 try {
-                    packet = Packet01Disconnect.fromBytes(data);
+                    packet = new Packet01Disconnect(bb);
                 } catch (Packet.InvalidPacketException e) {
                     e.printStackTrace();
                     return;
@@ -86,7 +91,7 @@ public class GameServer extends Thread {
                 break;
             case MOVE:
                 try {
-                    packet = Packet02Move.fromBytes(data);
+                    packet = new Packet02Move(bb);
                     handleMove((Packet02Move) packet);
                 } catch (Packet.InvalidPacketException e) {
                     e.printStackTrace();
@@ -154,5 +159,10 @@ public class GameServer extends Thread {
             sendData(data, np.ipAddress, np.port);
         }
         Logging.log("SERVER", "sent %s", new String(data));
+    }
+
+    public void tick() {
+
+
     }
 }

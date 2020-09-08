@@ -15,6 +15,8 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.net.*;
+import java.nio.ByteBuffer;
+import java.util.concurrent.Executors;
 
 public class GameClient extends Thread implements WindowListener {
     private InetAddress ipAddress;
@@ -51,10 +53,12 @@ public class GameClient extends Thread implements WindowListener {
     }
 
     private void onPacketRecieved(DatagramPacket packet) {
-        String message = Packet.getByteHexStr(packet.getData());
-        if (message.length() >= 10) message = message.substring(0, 20)+" ...";
-        Logging.log("CLIENT","%-7s [%s:%-5s]: [%4d] %s", "CLIENT", packet.getAddress().getHostAddress(), packet.getPort(), message.length(), message);
-        parsePacket(packet);
+        Executors.newSingleThreadExecutor().execute(()->{
+            String message = Packet.getByteHexStr(packet.getData());
+            if (message.length() >= 10) message = message.substring(0, 20)+" ...";
+            Logging.log("CLIENT","%-7s [%s:%-5s]: [%4d] %s", "CLIENT", packet.getAddress().getHostAddress(), packet.getPort(), message.length(), message);
+        });
+       parsePacket(packet);
     }
 
     @SuppressWarnings("Duplicates")
@@ -62,14 +66,16 @@ public class GameClient extends Thread implements WindowListener {
         byte[] data = datagramPacket.getData();
         InetAddress address = datagramPacket.getAddress();
         int port = datagramPacket.getPort();
-        Packet.Type pt = Packet.Type.lookup(data);
+
+        ByteBuffer bb = ByteBuffer.wrap(data);
+        Packet.Type pt = Packet.parseType(bb);
         Packet packet = null;
         switch (pt) {
             case INVALID:
                 break;
             case LOGIN:
                 try {
-                    packet = Packet00Login.fromBytes(data);
+                    packet = new Packet00Login(bb);
                 } catch (Packet.InvalidPacketException e) {
                     e.printStackTrace();
                     return;
@@ -79,7 +85,7 @@ public class GameClient extends Thread implements WindowListener {
                 break;
             case DISCONNECT:
                 try {
-                    packet = Packet01Disconnect.fromBytes(data);
+                    packet = new Packet01Disconnect(bb);
                 } catch (Packet.InvalidPacketException e) {
                     e.printStackTrace();
                     return;
@@ -88,7 +94,7 @@ public class GameClient extends Thread implements WindowListener {
                 break;
             case MOVE:
                 try {
-                    packet = Packet02Move.fromBytes(data);
+                    packet = new Packet02Move(bb);
                     handler
                             .getNetPlayerByName(((Packet02Move) packet).getName())
                             .setTransform(((Packet02Move) packet).getTransform());

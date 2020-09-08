@@ -2,6 +2,7 @@ package com.game.engine.math;
 
 import com.game.Screen;
 import com.game.engine.GameObject;
+import com.game.net.packets.Packet;
 import com.game.net.packets.Serializable;
 
 import java.awt.geom.AffineTransform;
@@ -92,8 +93,8 @@ public class Transform implements Serializable<Transform> {
     }
 
     @Override
-    public Transform fromByteCode(ByteBuffer data) throws InvalidFormatException {
-        if (data.remaining() < getNumberOfBytes()) throw new InvalidFormatException(this, data.toString());
+    public Transform fromByteCode(ByteBuffer data) throws Packet.InvalidPacketException {
+        if (data.remaining() < getNumberOfBytes()) throw new Packet.InvalidPacketException();
         Vector2D pos = new Vector2D().fromByteCode(data);
         Vector2D vel = new Vector2D().fromByteCode(data);
         this.setPosition(pos);

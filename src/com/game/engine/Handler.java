@@ -54,7 +54,6 @@ public class Handler {
         this.rayCasters = new ArrayList<>();
         this.screen = new Screen(this, w, h);
         this.rand = r;
-        this.powerupSpawner = new Cooldown(10);
         executor = Executors.newFixedThreadPool(2);
     }
 
@@ -109,20 +108,6 @@ public class Handler {
             }
         }
         objectsLock.unlock();
-
-
-        if (powerupSpawner.timedOut()) {
-            int N = 2;
-            switch (rand.nextInt(N)) {
-                case 0:
-                    this.addObject(new HealPowerup(rand));
-                    break;
-                case 1:
-                    this.addObject(new SpeedPowerup(rand));
-                    break;
-            }
-            powerupSpawner.reset();
-        }
     }
 
     public void addKeyListener(KeyListener kl) {

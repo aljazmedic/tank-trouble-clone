@@ -6,30 +6,35 @@ import com.game.engine.collision.Collidable;
 import com.game.engine.collision.Collider;
 import com.game.engine.math.Cooldown;
 import com.game.engine.math.Vector2D;
+import com.game.net.packets.Packet;
+import com.game.net.packets.Serializable;
 import com.game.player.Player;
 
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
+import java.nio.ByteBuffer;
 import java.util.Random;
 
 public abstract class Powerup extends GameObject implements Collidable {
 
     public static final int SIZE = 14;
+    private Powerup.Type powerupId;
     public Player holder;
     protected Cooldown timer;
     protected Color color;
     protected Collider collider;
 
-    public Powerup(Vector2D pos, int time) {
+    public Powerup(Powerup.Type t, Vector2D pos, int time) {
         super(pos, ID.Powerup);
+        powerupId = t;
         holder = null;
         timer = new Cooldown(time);
         color = Color.BLACK;
         collider = new Collider(this, new Shape[]{new Ellipse2D.Double(-SIZE / 2., -SIZE / 2., SIZE, SIZE)});
     }
 
-    public Powerup(Random rand, int time) {
-        this(new Vector2D(
+    public Powerup(Powerup.Type t,Random rand, int time) {
+        this(t, new Vector2D(
                 (rand.nextDouble() * Game.WIDTH) - Game.WIDTH / 2.,
                 (rand.nextDouble() * Game.HEIGHT) - Game.HEIGHT / 2.
         ), time);
@@ -83,5 +88,67 @@ public abstract class Powerup extends GameObject implements Collidable {
         if (!(p instanceof SinglePowerupAAT)) return;
         player.powerupsApplied &= ~(1 << ((SinglePowerupAAT) p).getConsecutiveNum());
         Game.getHandler().removeObject(p);
+    }
+
+    public void craftPacket() {
+
+    }
+
+    public Type getPowerupId() {
+        return powerupId;
+    }
+
+
+    public enum Type implements Serializable {
+        HEAL("he"),
+        SPEED("sp"),
+        INVALID("ff");
+
+        private final String powerupId;
+
+        Type(String id) {
+            this.powerupId = id;
+        }
+
+        public String getPowerupId() {
+            return powerupId;
+        }
+
+        @Override
+        public String toString() {
+            return this.powerupId;
+        }
+
+        public static Type lookup(byte[] startBytes) {
+            ByteBuffer bb = ByteBuffer.wrap(startBytes);
+            return lookup("" + bb.getChar() + bb.getChar());
+        }
+
+        public static Type lookup(String id) {
+            for (Type pt : Type.values()) {
+                if (pt.getPowerupId().equals(id)) return pt;
+            }
+            return INVALID;
+        }
+
+        @Override
+        public byte[] toByteCode() {
+            byte[] o = new byte[getNumberOfBytes()];
+            ByteBuffer bb = ByteBuffer.wrap(o);
+            for (char c : this.powerupId.toCharArray()) {
+                bb.putChar(c);
+            }
+            return o;
+        }
+
+        @Override
+        public Serializable fromByteCode(ByteBuffer data) throws Packet.InvalidPacketException {
+            return lookup(String.valueOf(data.getChar()) + data.getChar());
+        }
+
+        @Override
+        public int getNumberOfBytes() {
+            return 2 * Character.BYTES;
+        }
     }
 }

@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 public interface Serializable<S extends Serializable> {
     byte[] toByteCode();
 
-    S fromByteCode(ByteBuffer data) throws InvalidFormatException;
+    S fromByteCode(ByteBuffer data) throws Packet.InvalidPacketException;
     int getNumberOfBytes();
 
     class InvalidFormatException extends Exception {

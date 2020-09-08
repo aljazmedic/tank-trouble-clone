@@ -2,6 +2,7 @@ package com.game.player;
 
 import com.game.DebugUtil;
 import com.game.bullet.BouncyBullet;
+import com.game.bullet.Bullet;
 import com.game.bullet.Shooter;
 import com.game.engine.Dyable;
 import com.game.engine.Game;
@@ -12,6 +13,7 @@ import com.game.engine.collision.Collider;
 import com.game.engine.math.StackCooldown;
 import com.game.engine.math.Transform;
 import com.game.engine.math.Vector2D;
+import com.game.net.packets.Packet;
 import com.game.net.packets.Serializable;
 
 import java.awt.*;
@@ -165,12 +167,10 @@ protected String name;
             );
         }
         if (keysDown[2]) {
-            Vector2D addition = transform.velocity.asMag(-moveMatrix[2]).restrict(cantMove);
-            transform.move(addition);
+            transform.move(transform.velocity.asMag(-moveMatrix[2]).restrict(cantMove));
         }
         if (keysDown[0]) {
-            Vector2D addition = transform.velocity.asMag(moveMatrix[1]).restrict(cantMove);
-            transform.move(addition);
+            transform.move(transform.velocity.asMag(moveMatrix[1]).restrict(cantMove));
         }
     }
 
@@ -226,10 +226,11 @@ protected String name;
     }
 
     @Override
-    public void shoot() {
-        BouncyBullet b = new BouncyBullet(this, 20);
+    public Bullet shoot() {
+        BouncyBullet b = new BouncyBullet(this);
         Game.getHandler().addObject(b);
         this.bulletCd.reset();
+        return b;
     }
 
     @Override
@@ -264,6 +265,11 @@ protected String name;
         this.transform =t;
         t.resetChanges();
     }
+
+    public ColorPreset getColors() {
+        return this.colors;
+    }
+
 
     public enum Preset {
         P1(ID.Player, ColorPreset.CP1, new Vector2D(-Game.WIDTH * 1. / 4., -Game.HEIGHT * 1. / 4.), KeySet.KEY_SET1),
@@ -310,7 +316,7 @@ protected String name;
         }
 
         @Override
-        public ColorPreset fromByteCode(ByteBuffer data) throws InvalidFormatException {
+        public ColorPreset fromByteCode(ByteBuffer data) throws Packet.InvalidPacketException {
             byte index = data.get();
             if(index >= all.length) index = 0;
             return all[index];

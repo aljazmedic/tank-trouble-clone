@@ -5,21 +5,15 @@ import java.nio.ByteBuffer;
 public class Packet01Disconnect extends NamePacket {
 
     public Packet01Disconnect(String name) {
-        super(name, Type.DISCONNECT);
+        super(Type.DISCONNECT, name);
     }
 
-    private Packet01Disconnect(ByteBuffer bb) throws Packet.InvalidPacketException {
-        super(bb, Type.DISCONNECT);
+    public Packet01Disconnect(ByteBuffer bb) throws Packet.InvalidPacketException {
+        super(Type.DISCONNECT,bb);
     }
 
     @Override
     public void putData(ByteBuffer bb) {
-    }
-
-    public static Packet01Disconnect fromBytes(byte[] data) throws Packet.InvalidPacketException {
-
-        ByteBuffer bb = ByteBuffer.wrap(data);
-        return new Packet01Disconnect(bb);
     }
 
 }

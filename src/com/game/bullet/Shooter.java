@@ -9,5 +9,5 @@ public interface Shooter {
 
     double getBulletSpawnAngle();
 
-    void shoot();
+    Bullet shoot();
 }

@@ -4,10 +4,10 @@ import java.awt.*;
 import java.util.Random;
 
 public class SpeedPowerup extends Powerup implements SinglePowerupAAT {
-    double[] oldMoveMatrix;
+    private double[] oldMoveMatrix;
 
     public SpeedPowerup(Random rand) {
-        super(rand, 400);
+        super(Type.SPEED,rand, 400);
         this.color = Color.BLUE;
     }
 
