@@ -10,14 +10,18 @@ import com.game.net.NetPlayer;
 import com.game.player.KeySet;
 import com.game.player.Player;
 import com.game.player.PlayerController;
+import com.sun.org.apache.xpath.internal.axes.LocPathIterator;
 
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Game extends Canvas implements Runnable {
     //https://youtu.be/Urg8AEIVyWA?t=8m45s
     private static final long serialVersionUID = -240840600533728354L;
+    public static ExecutorService logExecutor = Executors.newFixedThreadPool(1);
     private static Random rand = new Random();
 
     public static final int WIDTH = 800, HEIGHT = WIDTH / 16 * 9;
@@ -48,14 +52,19 @@ public class Game extends Canvas implements Runnable {
         }
 
         instance = new Game();
-        instance.init();
-        instance.createLocalPlayer(gs.getName(), KeySet.KEY_SET2);
+
 
         if (gs.shouldRunServer()) {
             instance.runServer();
         }
-        instance.runClient(gs.getIp());
-        instance.start();
+        if(gs.shouldRunClient()){
+            instance.init();
+            instance.createLocalPlayer(gs.getName(), KeySet.KEY_SET2);
+
+            instance.runClient(gs.getIp());
+            instance.start();
+
+        }
     }
 
     public Game() {

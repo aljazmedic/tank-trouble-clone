@@ -8,17 +8,19 @@ public class GameSettings {
     private final String name;
     private final String ip;
     private boolean runServer;
+    private boolean runClient;
 
-    private GameSettings(String name, String ip, boolean runServer) {
+    private GameSettings(String name, String ip, boolean runServer, boolean runClient) {
 
         this.name = name;
         this.ip = ip;
 
         this.runServer = runServer;
+        this.runClient = runClient;
     }
 
     static GameSettings fromArgs(String[] args) throws InvalidArgumentsException {
-        String name = null, ip = null, runServer = null;
+        String name = null, ip = null, runServer = null, runClient = null;
         try {
             for (int i = 0; i < args.length; i++) {
                 String t = args[i].trim();
@@ -26,8 +28,11 @@ public class GameSettings {
                     if (t.equals("--server") || (t.equals("-s"))) {
                         runServer = "server";
                         continue;
-                    } else if (t.equals("--client") || (t.equals("-c"))) {
-                        runServer = "client";
+                    }
+                }
+                if (runClient == null) {
+                    if (t.equals("--client") || (t.equals("-c"))) {
+                        runClient = "client";
                         continue;
                     }
                 }
@@ -46,12 +51,16 @@ public class GameSettings {
         } catch (IndexOutOfBoundsException e) {
             throw new InvalidArgumentsException();
         }
-        boolean shouldRunServer;
-        if (runServer == null)
-            shouldRunServer = JOptionPane.showConfirmDialog(null, "Run server?", "Server", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
-        else {
-            shouldRunServer = runServer.equals("server");
-        }
+
+//        @SuppressWarnings("SimplifiableConditionalExpression")
+//        boolean shouldRunServer = (runServer == null) ? (JOptionPane.showConfirmDialog(null, "Run server?", "Server",
+//                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) : true;
+//        @SuppressWarnings("SimplifiableConditionalExpression")
+//        boolean shouldRunClient = (runClient == null) ? (JOptionPane.showConfirmDialog(null, "Run client?", "Client",
+//                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) : true;
+        boolean shouldRunServer = (runServer != null);
+        boolean shouldRunClient = (runClient != null);
+
         if (name == null) {
             name = JOptionPane.showInputDialog("Enter username");
             /*
@@ -65,11 +74,9 @@ public class GameSettings {
         }
         ip = ip == null ? JOptionPane.showInputDialog("Enter IP") : ip;
 
-
-        if(name==null || ip == null) throw new InvalidArgumentsException();
-        return new
-
-                GameSettings(name, ip, shouldRunServer);
+        System.out.printf("%s %s %b %b\n", name, ip, shouldRunServer, shouldRunClient);
+        if (name == null || ip == null) throw new InvalidArgumentsException();
+        return new GameSettings(name, ip, shouldRunServer, shouldRunClient);
     }
 
     public String getIp() {
@@ -82,6 +89,10 @@ public class GameSettings {
 
     public boolean shouldRunServer() {
         return runServer;
+    }
+
+    public boolean shouldRunClient() {
+        return runClient;
     }
 
     static class InvalidArgumentsException extends Exception {

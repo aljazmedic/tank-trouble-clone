@@ -2,18 +2,17 @@ package com.game.net;
 
 import com.game.net.packets.Packet;
 
-import java.net.Socket;
-
 public class Logging {
+
     @SuppressWarnings("UnusedReturnValue")
-    public static String log(String origin, Object o) {
+    public static void log(Object o) {
         if (o == null) o = "None";
-        return _log(origin, o.toString());
+        _log(o.toString());
     }
 
 
     @SuppressWarnings({"unused", "UnusedReturnValue", "SameParameterValue"})
-    public static String log(String origin, String fmt, Object... formatData) {
+    public static void log(String fmt, Object... formatData) {
         Object[] fwdAray = new Object[formatData.length];
         for (int i = 0; i < formatData.length; i++) {
             Object o;
@@ -27,14 +26,14 @@ public class Logging {
                 StringBuilder sb = new StringBuilder();
                 sb.append(componenetType.getName()).append('[');
 
-                if(componenetType == byte.class){
+                if (componenetType == byte.class) {
                     //Byte array handling
                     byte[] newByteArray = new byte[arr.length];
                     for (int i1 = 0, arrLength = arr.length; i1 < arrLength; i1++) {
                         newByteArray[i1] = (Byte) arr[i1];
                     }
                     sb.append(Packet.getByteHexStr(newByteArray));
-                }else{
+                } else {
                     //Other array handling
                     if (arr.length > 0)
                         sb.append(arr[0]);
@@ -49,15 +48,16 @@ public class Logging {
 
             fwdAray[i] = o;
         }
-        return _log(origin, String.format(fmt, fwdAray));
+        _log(String.format(fmt, fwdAray));
+
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    private static String _log(String origin, String message) {
-        //String logMsg = String.format("%-7s [%s:%-5s]: %s", "SERVER", this.socket.getInetAddress().getHostAddress(), this.socket.getPort(), message);
+    private static synchronized void _log(String message) {
+        String originCls = new Exception().getStackTrace()[2].getClassName();
+        String origin = String.format("%s %10s", originCls, Thread.currentThread().getName());
         String logMsg = String.format("%-7s: %s", origin, message);
         System.out.println(logMsg);
-        return logMsg;
+        //String logMsg = String.format("%-7s [%s:%-5s]: %s", "SERVER", this.socket.getInetAddress().getHostAddress(), this.socket.getPort(), message);
     }
 
     private static boolean isArray(Object obj) {

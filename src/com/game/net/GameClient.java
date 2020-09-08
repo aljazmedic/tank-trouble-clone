@@ -1,23 +1,17 @@
 package com.game.net;
 
 import com.game.engine.Game;
-import com.game.engine.GameObject;
 import com.game.engine.Handler;
-import com.game.engine.math.Transform;
-import com.game.engine.math.Vector2D;
 import com.game.net.packets.Packet;
 import com.game.net.packets.Packet00Login;
 import com.game.net.packets.Packet01Disconnect;
 import com.game.net.packets.Packet02Move;
-import com.game.player.Player;
 
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.net.*;
 import java.nio.ByteBuffer;
-import java.util.concurrent.Executors;
-
 public class GameClient extends Thread implements WindowListener {
     private InetAddress ipAddress;
     private DatagramSocket socket;
@@ -27,6 +21,7 @@ public class GameClient extends Thread implements WindowListener {
     private Handler handler;
 
     public GameClient(Game _g, String ipAddress) {
+        super("ClientThread");
         this.game = _g;
         handler = Game.getHandler();
         try {
@@ -39,7 +34,7 @@ public class GameClient extends Thread implements WindowListener {
     }
 
     public void run() {
-        Logging.log("CLIENT","Started!");
+        Logging.log("Started!");
         while (true) {
             byte[] data = new byte[1024];
             DatagramPacket packet = new DatagramPacket(data, data.length);
@@ -52,13 +47,13 @@ public class GameClient extends Thread implements WindowListener {
         }
     }
 
+    @SuppressWarnings("Duplicates")
     private void onPacketRecieved(DatagramPacket packet) {
-        Executors.newSingleThreadExecutor().execute(()->{
-            String message = Packet.getByteHexStr(packet.getData());
-            if (message.length() >= 10) message = message.substring(0, 20)+" ...";
-            Logging.log("CLIENT","%-7s [%s:%-5s]: [%4d] %s", "CLIENT", packet.getAddress().getHostAddress(), packet.getPort(), message.length(), message);
-        });
        parsePacket(packet);
+        String message = Packet.getByteHexStr(packet.getData());
+        if (message.length() >= 10) message = message.substring(0, 20)+" ...";
+        Logging.log("CLIENT %-7s [%s:%-5s]: [%4d] %s", game.player.getName(), packet.getAddress().getHostAddress(), packet.getPort(), message.length(), message);
+
     }
 
     @SuppressWarnings("Duplicates")
@@ -71,11 +66,10 @@ public class GameClient extends Thread implements WindowListener {
         Packet.Type pt = Packet.parseType(bb);
         Packet packet = null;
         switch (pt) {
-            case INVALID:
-                break;
             case LOGIN:
                 try {
                     packet = new Packet00Login(bb);
+                    Logging.log(packet);
                 } catch (Packet.InvalidPacketException e) {
                     e.printStackTrace();
                     return;
@@ -86,6 +80,7 @@ public class GameClient extends Thread implements WindowListener {
             case DISCONNECT:
                 try {
                     packet = new Packet01Disconnect(bb);
+                    Logging.log(packet);
                 } catch (Packet.InvalidPacketException e) {
                     e.printStackTrace();
                     return;
@@ -95,6 +90,7 @@ public class GameClient extends Thread implements WindowListener {
             case MOVE:
                 try {
                     packet = new Packet02Move(bb);
+                    Logging.log(packet);
                     handler
                             .getNetPlayerByName(((Packet02Move) packet).getName())
                             .setTransform(((Packet02Move) packet).getTransform());
@@ -103,15 +99,17 @@ public class GameClient extends Thread implements WindowListener {
                     return;
                 }
                 break;
+            case INVALID:
+            default:
+                break;
         }
-        Logging.log("CLIENT",packet);
     }
 
     public void sendData(byte[] data) {
         DatagramPacket packet = new DatagramPacket(data, data.length, ipAddress, GAME_PORT);
         try {
             socket.send(packet);
-            Logging.log("CLIENT","sent %s",new String(data));
+            Logging.log("sent %s",new String(data));
         } catch (IOException e) {
             e.printStackTrace();
         }
