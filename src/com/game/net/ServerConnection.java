@@ -13,8 +13,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class ServerConnection {
-
+public class ServerConnection{
     static final HashMap<String, ServerConnection> allConnections = new HashMap<>();
     private NetPlayer player;
     private DatagramSocket clientSocket;
@@ -22,7 +21,7 @@ public class ServerConnection {
 
     ServerConnection(NetPlayer np, GameServer server) {
         this.player = np;
-        this.executor = Executors.newFixedThreadPool(1, server);
+        this.executor = Executors.newSingleThreadExecutor(server);
         try {
             Logging.log("ServerConnection recieved from %s:%4d", np.ipAddress.getHostAddress(), np.port);
             this.clientSocket = new DatagramSocket();
@@ -48,7 +47,7 @@ public class ServerConnection {
     }
 
     void sendToClient(Packet p) {
-        executor.execute(() -> {
+        executor.submit(() -> {
             byte[] bytes = p.build(1024);
             try {
                 DatagramPacket dp = new DatagramPacket(bytes, bytes.length, this.player.ipAddress, this.player.port);
@@ -61,7 +60,7 @@ public class ServerConnection {
     }
 
     void sendToClient(byte[] bytes) {
-        executor.execute(() -> {
+        executor.submit(() -> {
             try {
                 DatagramPacket dp = new DatagramPacket(bytes, bytes.length, this.player.ipAddress, this.player.port);
                 this.clientSocket.send(dp);

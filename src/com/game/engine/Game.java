@@ -3,25 +3,20 @@ package com.game.engine;
 import com.game.Hud;
 import com.game.Mouse;
 import com.game.engine.math.Vector2D;
-import com.game.gfx.SpriteSheet;
 import com.game.net.GameClient;
 import com.game.net.GameServer;
 import com.game.net.NetPlayer;
 import com.game.player.KeySet;
 import com.game.player.Player;
 import com.game.player.PlayerController;
-import com.sun.org.apache.xpath.internal.axes.LocPathIterator;
 
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class Game extends Canvas implements Runnable {
     //https://youtu.be/Urg8AEIVyWA?t=8m45s
     private static final long serialVersionUID = -240840600533728354L;
-    public static ExecutorService logExecutor = Executors.newFixedThreadPool(1);
     private static Random rand = new Random();
 
     public static final int WIDTH = 800, HEIGHT = WIDTH / 16 * 9;
@@ -148,6 +143,7 @@ public class Game extends Canvas implements Runnable {
         double delta = 0;
         long timer = System.currentTimeMillis();
         int frames = 0, ticks = 0;
+
         while (running) {
             long now = System.nanoTime();
             delta += (now - lastTime) / ns;

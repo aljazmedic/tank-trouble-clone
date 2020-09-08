@@ -6,7 +6,6 @@ import com.game.net.packets.Packet;
 import com.game.net.packets.Packet00Login;
 import com.game.net.packets.Packet01Disconnect;
 import com.game.net.packets.Packet02Move;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.*;
@@ -148,8 +147,9 @@ public class GameServer extends Thread implements ThreadFactory {
 
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
-    public Thread newThread(@NotNull Runnable runnable){
+    public Thread newThread(Runnable runnable){
         int n = ServerConnection.allConnections.size()+1;
         return new Thread(runnable, String.format("server-conn-%d", n));
     }
