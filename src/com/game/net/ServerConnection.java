@@ -20,9 +20,9 @@ public class ServerConnection {
     private DatagramSocket clientSocket;
     private ExecutorService executor;
 
-    ServerConnection(NetPlayer np) {
+    ServerConnection(NetPlayer np, GameServer server) {
         this.player = np;
-        this.executor = Executors.newFixedThreadPool(1, new NameableThreadFactory("server-conn"));
+        this.executor = Executors.newFixedThreadPool(1, server);
         try {
             Logging.log("ServerConnection recieved from %s:%4d", np.ipAddress.getHostAddress(), np.port);
             this.clientSocket = new DatagramSocket();

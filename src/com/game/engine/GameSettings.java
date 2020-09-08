@@ -51,15 +51,14 @@ public class GameSettings {
         } catch (IndexOutOfBoundsException e) {
             throw new InvalidArgumentsException();
         }
-
-//        @SuppressWarnings("SimplifiableConditionalExpression")
-//        boolean shouldRunServer = (runServer == null) ? (JOptionPane.showConfirmDialog(null, "Run server?", "Server",
-//                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) : true;
-//        @SuppressWarnings("SimplifiableConditionalExpression")
-//        boolean shouldRunClient = (runClient == null) ? (JOptionPane.showConfirmDialog(null, "Run client?", "Client",
-//                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) : true;
         boolean shouldRunServer = (runServer != null);
         boolean shouldRunClient = (runClient != null);
+        if (!shouldRunClient && !shouldRunServer) {
+            shouldRunServer = JOptionPane.showConfirmDialog(null, "Run server?", "Server",
+                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+            shouldRunClient = JOptionPane.showConfirmDialog(null, "Run client?", "Client",
+                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+        }
 
         if (name == null) {
             name = JOptionPane.showInputDialog("Enter username");

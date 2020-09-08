@@ -6,13 +6,15 @@ import com.game.net.packets.Packet;
 import com.game.net.packets.Packet00Login;
 import com.game.net.packets.Packet01Disconnect;
 import com.game.net.packets.Packet02Move;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
-public class GameServer extends Thread {
+public class GameServer extends Thread implements ThreadFactory {
     private DatagramSocket socket;
 
     private Game game;
@@ -126,7 +128,7 @@ public class GameServer extends Thread {
             this.game.player.ipAddress = newNetPlayer.ipAddress;
             this.game.player.port = newNetPlayer.port;
         }
-        new ServerConnection(newNetPlayer);
+        new ServerConnection(newNetPlayer, this);
     }
 
     public void sendDataToAllClients(byte[] data) {
@@ -144,5 +146,11 @@ public class GameServer extends Thread {
     public void tick() {
 
 
+    }
+
+    @Override
+    public Thread newThread(@NotNull Runnable runnable){
+        int n = ServerConnection.allConnections.size()+1;
+        return new Thread(runnable, String.format("server-conn-%d", n));
     }
 }
