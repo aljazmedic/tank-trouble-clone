@@ -8,10 +8,10 @@ The game runs on port `1331`. <br/> Possible running client & server application
 
 #### Current features
 
--[x] Player Connecting | Moving | Disconnecting
--[x] Multithreaded Server (Each client has its own thread)
--[x] Command line arguments
--[x] Client-side raycasting
+- [x] Player Connecting | Moving | Disconnecting
+- [x] Multithreaded Server (Each client has its own thread)
+- [x] Command line arguments
+- [x] Client-side raycasting
 
 ```bash
     --name <name>       : Set player name
@@ -22,13 +22,13 @@ The game runs on port `1331`. <br/> Possible running client & server application
 
 #### Features TODO
 
--[ ] SpriteSheet for tanks
--[ ] Bullet shooting
--[ ] Client multi-threading
--[ ] Synchronized death
--[ ] Synchronized powerup spawning
--[ ] Packet security??
--[ ] Terrain generation options:
+- [ ] SpriteSheet for tanks
+- [ ] Bullet shooting
+- [ ] Client multi-threading
+- [ ] Synchronized death
+- [ ] Synchronized powerup spawning
+- [ ] Packet security??
+- [ ] Terrain generation options:
     - Generic maze generator
     - Procedural generation?
     - Cellular automata => Marching squares
