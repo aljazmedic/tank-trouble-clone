@@ -1,5 +1,7 @@
 package com.game.powerups;
 
+import com.game.engine.math.Transform;
+
 import java.awt.*;
 import java.util.Random;
 
@@ -7,7 +9,12 @@ public class SpeedPowerup extends Powerup implements SinglePowerupAAT {
     private double[] oldMoveMatrix;
 
     public SpeedPowerup(Random rand) {
-        super(Type.SPEED,rand, 400);
+        super(Type.SPEED, rand, 400);
+        this.color = Color.BLUE;
+    }
+
+    public SpeedPowerup(Transform t) {
+        super(Type.SPEED, t.position, 400);
         this.color = Color.BLUE;
     }
 

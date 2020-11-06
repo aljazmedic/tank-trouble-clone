@@ -6,6 +6,10 @@ import com.game.engine.math.Vector2D;
 import com.game.layers.Layer;
 
 import java.awt.*;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Date;
 
 public abstract class GameObject implements Tickeable {
 
@@ -100,17 +104,43 @@ public abstract class GameObject implements Tickeable {
         Bullet(Layer.BULLETS), Screen(Layer.ENVIRONMENT), Powerup(Layer.POWERUPS), Wall(Layer.ENVIRONMENT), Mouse(Layer.MOUSE);
 
         private final long layers;
+        private final String type;
 
         ID(Layer... layers) {
             this.layers = Layer.all(layers);
+            this.type = this.name();
         }
 
         public long getLayers() {
             return this.layers;
         }
+
+
     }
 
     public String toString() {
         return String.format("%s(%s)", this.getClass().getTypeName(), this.transform.position.coordsString());
+    }
+
+    public static String hash(GameObject go) {
+        MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("SHA");
+        } catch (NoSuchAlgorithmException e) {
+            return null;
+        }
+        md.update(go.getId().name().getBytes());
+        md.update(go.transform.toByteCode());
+        md.update(new Date().toString().getBytes());
+
+// Call md.update with class's own data and recurse using
+// updateDigest methods of internal objects
+
+// Compute the digest
+        byte[] result = md.digest();
+
+// Convert to string to be able to use in a hash map
+        BigInteger mediator = new BigInteger(1, result);
+        return String.format("%040x", mediator);
     }
 }

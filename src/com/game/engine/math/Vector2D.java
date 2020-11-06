@@ -16,6 +16,7 @@ public class Vector2D extends Point2D.Double implements Serializable<Vector2D> {
     final public static Vector2D DOWN = new Vector2D(0, -1);
     final public static Vector2D UP = new Vector2D(0, 1);
     final public static Vector2D RIGHT = new Vector2D(1, 0);
+    final public static Vector2D LEFT = new Vector2D(-1, 0);
     final public static Vector2D ZERO = new Vector2D(0, 0);
     final public static Vector2D IDENTITY = new Vector2D(1, 1);
 
@@ -66,8 +67,8 @@ public class Vector2D extends Point2D.Double implements Serializable<Vector2D> {
         return new Vector2D(p2d);
     }
 
-    public Vector2D translate(double x, double y) {
-        return new Vector2D(new Vector2D(x, y));
+    public Vector2D translate(double dx, double dy) {
+        return new Vector2D(this.x +dx, this.y + dy);
     }
 
     public Vector2D scale(double dx, double dy) {

@@ -183,13 +183,17 @@ public class RayCaster implements MouseMotionListener, RayCastable {
 
     @Override
     public void mouseDragged(MouseEvent e) {
+        updateFromMouseEvent(e);
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        Vector2D v2d = new Vector2D(e.getX(), e.getY());
-        Handler.transformVector(v2d);
-        this.setDirection(v2d.sub(this.origin));
+        updateFromMouseEvent(e);
     }
 
+    private void updateFromMouseEvent(MouseEvent e){
+        Vector2D v2d = new Vector2D(e.getX(), e.getY());
+        v2d=Handler.transformVector(v2d).sub(this.origin);
+        this.setDirection(v2d);
+    }
 }

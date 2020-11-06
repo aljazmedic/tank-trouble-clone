@@ -2,16 +2,15 @@ package com.game.net;
 
 import com.game.engine.Game;
 import com.game.engine.Handler;
-import com.game.net.packets.Packet;
-import com.game.net.packets.Packet00Login;
-import com.game.net.packets.Packet01Disconnect;
-import com.game.net.packets.Packet02Move;
+import com.game.net.packets.*;
+import com.game.powerups.Powerup;
 
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.net.*;
 import java.nio.ByteBuffer;
+
 public class GameClient extends Thread implements WindowListener {
     private InetAddress ipAddress;
     private DatagramSocket socket;
@@ -99,6 +98,16 @@ public class GameClient extends Thread implements WindowListener {
                     return;
                 }
                 break;
+            case POWERUP_SPAWN:
+                try{
+                    packet = new Packet04PowerupSpawn(bb);
+                    Logging.log(packet);
+                    Powerup p = ((Packet04PowerupSpawn)packet).createPowerup();
+                    handler.addObject(p);
+                }catch (Packet.InvalidPacketException e) {
+                    e.printStackTrace();
+                    return;
+                }
             case INVALID:
             default:
                 break;

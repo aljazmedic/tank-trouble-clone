@@ -22,13 +22,13 @@ The game runs on port `1331`. <br/> Possible running client & server application
 
 #### Features TODO
 
--[ ] SpriteSheet for tanks
--[ ] Bullet shooting
--[ ] Client multi-threading
--[ ] Synchronized death
--[ ] Synchronized powerup spawning
--[ ] Packet security??
--[ ] Terrain generation options:
+- [ ] SpriteSheet for tanks
+- [ ] Bullet shooting
+- [ ] Client multi-threading
+- [ ] Synchronized death
+- [ ] Synchronized powerup spawning
+- [ ] Packet security??
+- [ ] Terrain generation options:
     - Generic maze generator
     - Procedural generation?
     - Cellular automata => Marching squares

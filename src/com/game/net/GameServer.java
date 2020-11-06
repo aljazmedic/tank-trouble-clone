@@ -1,16 +1,15 @@
 package com.game.net;
 
 import com.game.engine.Game;
-import com.game.engine.Handler;
 import com.game.net.packets.Packet;
 import com.game.net.packets.Packet00Login;
 import com.game.net.packets.Packet01Disconnect;
 import com.game.net.packets.Packet02Move;
+import com.game.powerups.Powerup;
 
 import java.io.IOException;
 import java.net.*;
 import java.nio.ByteBuffer;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
 public class GameServer extends Thread implements ThreadFactory {
@@ -21,6 +20,7 @@ public class GameServer extends Thread implements ThreadFactory {
     public GameServer(Game _g) {
         super("ServerThread");
         this.game = _g;
+        new PowerupManager(10 * 1000, _g.getRandom(), this).start();
         try {
             Logging.log("Server listening on %4d ", 1331);
             this.socket = new DatagramSocket(1331);
@@ -66,7 +66,7 @@ public class GameServer extends Thread implements ThreadFactory {
                     packet = new Packet00Login(bb);
                     Logging.log(packet);
                     NetPlayer np = ((Packet00Login) packet).createPlayer(address, port);
-                    addConnection(np, (Packet00Login) packet);
+                    addConnection(np);
                 } catch (Packet.InvalidPacketException e) {
                     e.printStackTrace();
                     return;
@@ -112,7 +112,7 @@ public class GameServer extends Thread implements ThreadFactory {
     }
 
 
-    public void addConnection(NetPlayer newNetPlayer, Packet00Login newPlayerPacket) {
+    public void addConnection(NetPlayer newNetPlayer) {
         Logging.log("Adding new player '%s'", newNetPlayer.getName());
 
         //Connection already added
@@ -142,15 +142,14 @@ public class GameServer extends Thread implements ThreadFactory {
         }
 
     }
-    public void tick() {
-
+    private void addPowerup(Powerup p){
 
     }
 
     @SuppressWarnings("NullableProblems")
     @Override
-    public Thread newThread(Runnable runnable){
-        int n = ServerConnection.allConnections.size()+1;
+    public Thread newThread(Runnable runnable) {
+        int n = ServerConnection.allConnections.size() + 1;
         return new Thread(runnable, String.format("server-conn-%d", n));
     }
 }

@@ -2,9 +2,7 @@ package com.game.net.packets;
 
 import com.game.net.GameClient;
 import com.game.net.GameServer;
-import com.game.powerups.Powerup;
 
-import java.io.DataInputStream;
 import java.nio.ByteBuffer;
 
 
@@ -23,11 +21,11 @@ public abstract class Packet {
         this.packetId = t;
     }
 
-    public void serverToClient(GameServer server) {
+    public synchronized void serverToClient(GameServer server) {
         server.sendDataToAllClients(this.build(1024));
     }
 
-    public void clientToServer(GameClient client) {
+    public synchronized void clientToServer(GameClient client) {
         client.sendData(this.build(1024));
     }
 
@@ -120,7 +118,8 @@ public abstract class Packet {
         LOGIN("lg"),
         DISCONNECT("dc"),
         MOVE("mv"),
-        NOP("np"), BULLET_SHOT("bs");
+        NOP("np"), BULLET_SHOT("bs"),
+        POWERUP_SPAWN("ps");
         private String packetId;
 
         Type(String id) {

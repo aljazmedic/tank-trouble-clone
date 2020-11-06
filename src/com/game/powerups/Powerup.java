@@ -7,6 +7,7 @@ import com.game.engine.collision.Collider;
 import com.game.engine.math.Cooldown;
 import com.game.engine.math.Vector2D;
 import com.game.net.packets.Packet;
+import com.game.net.packets.Packet04PowerupSpawn;
 import com.game.net.packets.Serializable;
 import com.game.player.Player;
 
@@ -18,7 +19,7 @@ import java.util.Random;
 public abstract class Powerup extends GameObject implements Collidable {
 
     public static final int SIZE = 14;
-    private Powerup.Type powerupId;
+    private Powerup.Type powerupType;
     public Player holder;
     protected Cooldown timer;
     protected Color color;
@@ -26,7 +27,7 @@ public abstract class Powerup extends GameObject implements Collidable {
 
     public Powerup(Powerup.Type t, Vector2D pos, int time) {
         super(pos, ID.Powerup);
-        powerupId = t;
+        powerupType = t;
         holder = null;
         timer = new Cooldown(time);
         color = Color.BLACK;
@@ -90,12 +91,12 @@ public abstract class Powerup extends GameObject implements Collidable {
         Game.getHandler().removeObject(p);
     }
 
-    public void craftPacket() {
-
+    public Packet04PowerupSpawn craftPacket() {
+        return new Packet04PowerupSpawn(this.powerupType.getPowerupId(), this.transform);
     }
 
-    public Type getPowerupId() {
-        return powerupId;
+    public Type getPowerupType() {
+        return powerupType;
     }
 
 

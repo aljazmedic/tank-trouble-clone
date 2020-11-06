@@ -13,15 +13,18 @@ import com.game.engine.collision.Collider;
 import com.game.engine.math.StackCooldown;
 import com.game.engine.math.Transform;
 import com.game.engine.math.Vector2D;
+import com.game.gfx.SpriteSheet;
 import com.game.net.packets.Packet;
 import com.game.net.packets.Serializable;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.nio.ByteBuffer;
 import java.util.Random;
 
 public class Player extends GameObject implements Shooter, Dyable, Collidable {
+    //private SpriteSheet spriteSheet;
     private double health;
     private final double maxHealth;
     private final static int SIZE = 32;
@@ -34,14 +37,16 @@ public class Player extends GameObject implements Shooter, Dyable, Collidable {
     private Collider collider;
 
     //HUD
-    private BodyPart lifeHud;
-    private static Vector2D hudOffset = Vector2D.DOWN.asMag(2 * SIZE);
+    private static final Vector2D TEXT_OFFSET = new Vector2D(-1, -1).mul(SIZE);
+    private static final Color LIFE_COLOR = new Color(0x00B220);
+    private static final Color HUD_COLOR = new Color(0x7B7B7B);
 
-    private static Vector2D textOffset = new Vector2D(-0.75, -.5).mul(SIZE);
     static double textSize = 0.01 * SIZE;
 
     private static Vector2D lifeOffset = new Vector2D(0.56, -0.125).mul(SIZE);
-    private static Vector2D lifeSize = new Vector2D(0.93, 0.23).mul(SIZE);
+    private static Vector2D lifeSize = new Vector2D(1, 1./4).mul(SIZE);
+    private static final Vector2D HUD_OFFSET = Vector2D.DOWN.asMag(2 * SIZE).add(Vector2D.LEFT.asMag(lifeSize.x/2));
+    private BodyPart hudPart;
 
     //SHOOTING
     private Vector2D bulletShootingOffset = Vector2D.RIGHT.asMag(3 / 4. * SIZE);
@@ -51,13 +56,14 @@ public class Player extends GameObject implements Shooter, Dyable, Collidable {
     //POWERUPS
     private double[] moveMatrix = new double[]{-0.07, 2, 1};
     public int powerupsApplied;
-//    Sprite hud = Sprite.fromSpriteSheet(SPRITE_SHEET, 0, 2);
-protected String name;
+    //    Sprite hud = Sprite.fromSpriteSheet(SPRITE_SHEET, 0, 2);
+    protected String name;
 //    private static Sprite[] bulletSprites = Sprite.arrayFromSpriteSheet(SPRITE_SHEET, 30, 36);
 //    private static Sprite[] bulletCdSprites = Sprite.arrayFromSpriteSheet(SPRITE_SHEET, 40, 47);
 
     public Player(Vector2D pos, Vector2D vel, PlayerController pc, ID id, ColorPreset c, String name) {
         super(pos, vel.asMag(1), id);
+        //spriteSheet = new SpriteSheet("/graphics/Sprite_Sheet.png");
         this.pc = pc;
         this.colors = c;
         this.createBodyParts();
@@ -68,7 +74,7 @@ protected String name;
         this.name = name;
     }
 
-    public Player(Vector2D pos, KeySet ks, ID id, ColorPreset cp, String name){
+    public Player(Vector2D pos, KeySet ks, ID id, ColorPreset cp, String name) {
         this(pos, Vector2D.DOWN, new PlayerController(Game.getHandler(), ks), id, cp, name);
     }
 
@@ -87,7 +93,7 @@ protected String name;
                 new BodyPart(this, new Ellipse2D.Double(-SIZE / 3., -SIZE / 3., SIZE * 2. / 3., SIZE * 2. / 3.), colors.getSecondary()),
                 new BodyPart(this, new Ellipse2D.Double(-1, -1, 2, 2), Color.black)};
         collider = new Collider(this, new Rectangle(-SIZE / 2, -SIZE / 2, SIZE, SIZE));
-        lifeHud = new BodyPart(this, new Rectangle(-SIZE, 0, 2 * SIZE, SIZE / 2), new Color(0x00B220));
+        hudPart = new BodyPart(this, new Rectangle(-SIZE, 0, 2 * SIZE, SIZE / 2), LIFE_COLOR);
     }
 
     public void tick() {
@@ -108,21 +114,31 @@ protected String name;
             bodyPart.fill(g);
         }
     }
-//
-//    public void drawLife(Graphics2D g) {
-//        AffineTransform hudTransform = new AffineTransform();
-//        Vector2D hudPos = transform.position.add(hudOffset);
-//        hudTransform.translate(hudPos.x, hudPos.y);
-//        hudTransform.scale(SIZE / 20., SIZE / 20.);
-//        hud.draw(g, hudTransform);
-//        g.setColor(lifeHud.c);
-//        ((Rectangle) lifeHud.s).setSize((int) (lifeSize.x * (this.health / this.maxHealth)), (int) lifeSize.y);
-//
-//        AffineTransform lifeTransform = new AffineTransform(hudTransform);
-//        lifeTransform.translate(lifeOffset.x, lifeOffset.y);
-//        g.fill(lifeTransform.createTransformedShape(lifeHud.s));
-//
-//        //Bullets
+
+    //
+    public void paint(Graphics2D g) {
+//        AffineTransform at = transform.getAffineTransform();
+//        g.drawImage(spriteSheet.getTile(0,0,4,4),,null);
+        drawBody(g);
+        drawLife(g); //TODO UnComment
+    }
+
+    public void drawLife(Graphics2D g) {
+        Vector2D hudPos = transform.position.add(HUD_OFFSET);
+
+        AffineTransform hudTransform = new AffineTransform();
+        hudTransform.translate(hudPos.x, hudPos.y);
+        hudTransform.scale(SIZE / 20., SIZE / 20.);
+        if (health != maxHealth) {
+            Rectangle rectangle = new Rectangle((int) lifeSize.x, (int) lifeSize.y);
+            g.setColor(HUD_COLOR);
+            g.fill(hudTransform.createTransformedShape(rectangle));
+            rectangle.setSize((int) (lifeSize.x * (this.health / this.maxHealth)), (int) lifeSize.y);
+            g.setColor(LIFE_COLOR);
+            g.fill(hudTransform.createTransformedShape(rectangle));
+        }
+
+        //Bullets
 //        int timesLeft = bulletCd.getTimesLeft();
 //        if (timesLeft > 0) {
 //            Sprite currBulletSprite = bulletSprites[timesLeft];
@@ -130,25 +146,20 @@ protected String name;
 //        } else {
 //            int n = (int) ((bulletCdSprites.length - 1) * (1 - bulletCd.timeLeft() / bulletCd.getBetweenStacksMax()));
 //            bulletCdSprites[n].draw(g, hudTransform);
+//            //AffineTransform textTransform = new AffineTransform(hudTransform);
+//            //textTransform.translate(TEXT_OFFSET.x, TEXT_OFFSET.y);
+//            // Game.font.draw(g, this.name, textTransform, Player.textSize, TextAlignment.LEFT);
 //        }
-//        AffineTransform textTransform = new AffineTransform(hudTransform);
-//        textTransform.translate(textOffset.x, textOffset.y);
-//        Game.font.draw(g, this.name, textTransform, Player.textSize, TextAlignment.LEFT);
-//    }
-
-    public void paint(Graphics2D g) {
-        drawBody(g);
-        //drawLife(g); //TODO UnComment
     }
 
 
     @Override
     public void gizmosPaint(Graphics2D g) {
         Vector2D off = transform.position.add(Vector2D.UP.copy().mul(2));
-        g.drawString(transform.position.toString()+" "+this.name, (int) off.x, (int) off.y);
+        g.drawString(transform.position.toString() + " " + this.name, (int) off.x, (int) off.y);
         Vector2D shootingOff = this.getBulletOrigin();
         g.fill(new Ellipse2D.Double(shootingOff.x, shootingOff.y, 3, 3));
-        DebugUtil.drawVector(g, transform.position, transform.velocity, 2 * SIZE);
+        DebugUtil.drawVectorFrom(g, transform.position, transform.velocity, 2*SIZE);
     }
 
     protected void move(boolean[] keysDown) {
@@ -262,7 +273,7 @@ protected String name;
     }
 
     public void setTransform(Transform t) {
-        this.transform =t;
+        this.transform = t;
         t.resetChanges();
     }
 
@@ -290,25 +301,30 @@ protected String name;
 
     public enum ColorPreset implements Serializable<ColorPreset> {
         CP1(1, new Color(0xFF2A2F), new Color(0x44FF37)),
-        CP2(2,new Color(0x2638FF), new Color(0xFF8F4C)),
-        CP3(3,new Color(0x8A2CFF), new Color(0xFFFE4E));
+        CP2(2, new Color(0x2638FF), new Color(0xFF8F4C)),
+        CP3(3, new Color(0x8A2CFF), new Color(0xFFFE4E));
         private static ColorPreset[] all = new ColorPreset[]{CP1, CP2, CP3};
         private byte index;
         private Color c1;
         private Color c2;
 
-        ColorPreset(int idx,Color c1, Color c2){
-            index = (byte)idx;
+        ColorPreset(int idx, Color c1, Color c2) {
+            index = (byte) idx;
             this.c1 = c1;
             this.c2 = c2;
         }
 
-        public static ColorPreset pickRandom(Random r){
+        public static ColorPreset pickRandom(Random r) {
             return all[r.nextInt(all.length)];
         }
 
-        public Color getPrimary(){return this.c1;}
-        public Color getSecondary(){return this.c2;}
+        public Color getPrimary() {
+            return this.c1;
+        }
+
+        public Color getSecondary() {
+            return this.c2;
+        }
 
         @Override
         public byte[] toByteCode() {
@@ -318,7 +334,7 @@ protected String name;
         @Override
         public ColorPreset fromByteCode(ByteBuffer data) throws Packet.InvalidPacketException {
             byte index = data.get();
-            if(index >= all.length) index = 0;
+            if (index >= all.length) index = 0;
             return all[index];
         }
 

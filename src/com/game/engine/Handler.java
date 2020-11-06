@@ -1,5 +1,6 @@
 package com.game.engine;
 
+import com.game.Mouse;
 import com.game.bullet.Bullet;
 import com.game.engine.math.Cooldown;
 import com.game.engine.math.Transform;
@@ -44,6 +45,7 @@ public class Handler {
     private Cooldown powerupSpawner;
     public final Random rand;
 
+    private Mouse mouse;
     private ExecutorService executor;
 
     public Handler(int w, int h, Game game, Random r) {
@@ -204,6 +206,8 @@ public class Handler {
                         powerupsLock.unlock();
                     }
                     break;
+                case Mouse:
+                    this.mouse = (Mouse) object;
                 case Wall:
                 case Screen:
                 default:

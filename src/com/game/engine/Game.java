@@ -3,6 +3,9 @@ package com.game.engine;
 import com.game.Hud;
 import com.game.Mouse;
 import com.game.engine.math.Vector2D;
+import com.game.engine.math.raytracing.RayCaster;
+import com.game.gfx.SpriteSheet;
+import com.game.layers.Layer;
 import com.game.net.GameClient;
 import com.game.net.GameServer;
 import com.game.net.NetPlayer;
@@ -35,6 +38,8 @@ public class Game extends Canvas implements Runnable {
 
     public NetPlayer player;
     public Window window;
+    public SpriteSheet spriteSheet;
+    public Mouse mouse;
 
     public static void main(String[] args) {
         GameSettings gs;
@@ -45,7 +50,6 @@ public class Game extends Canvas implements Runnable {
             System.exit(0);
             return;
         }
-
         instance = new Game();
 
 
@@ -65,6 +69,8 @@ public class Game extends Canvas implements Runnable {
     public Game() {
         handler = new Handler(WIDTH, HEIGHT, this, rand);
         random = new Random(34565434567876L);
+        mouse = new Mouse(this);
+        //spriteSheet = new SpriteSheet("/graphics/Sprite_Sheet.png");
     }
 
     public Random getRandom() {
@@ -96,21 +102,16 @@ public class Game extends Canvas implements Runnable {
     }
 
     private void init() {
-        Mouse mcl = new Mouse();
-        this.addMouseListener(mcl);
-        this.addMouseMotionListener(mcl);
+        window = new Window("Tank Trouble", this);
 
 
         //hud = new Hud(handler.getActivePlayer(GameObject.ID.Player1), new Vector2D(-Game.WIDTH/2. + 16, Game.HEIGHT/2. -16));
-        //new RayCaster(Vector2D.ZERO,Math.PI*3/2);
-//        RayCaster rc = new RayCaster(Vector2D.ZERO, Layer.EVERYTHING, h -> h.allGameObjects(Layer.not(Layer.ENVIRONMENT)));
-//        getHandler().addRayCaster(rc);
+        RayCaster rc = new RayCaster(Vector2D.ZERO, Layer.EVERYTHING, h -> h.allGameObjects(Layer.not(Layer.ENVIRONMENT)));
+        getHandler().addRayCaster(rc);
 
-        window = new Window("Tank Trouble", this);
-        window.requestFocus();
     }
 
-    void runClient(String ip){
+    private void runClient(String ip){
         socketClient = new GameClient(this, ip);
         socketClient.start();
     }
@@ -171,7 +172,6 @@ public class Game extends Canvas implements Runnable {
 
 
     private void tick() {
-        if(runningServer) socketServer.tick();
         handler.tick();
     }
 
@@ -197,6 +197,8 @@ public class Game extends Canvas implements Runnable {
         g2d.setTransform(Handler.getDrawTransform());
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_ON);
+
+
         handler.paint(g2d);
         handler.gizmosPaint(g2d);
 //        font.draw(g2d, "TEST", new Vector2D(100, 100), 1);
